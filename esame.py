@@ -164,9 +164,3 @@ def daily_stats(time_series):
         
     return lista_temp_giorno   
                
-                  
-##################### chiamata delle funzioni ########################
-
-time_series_file = CSVTimeSeriesFile(name = 'data.csv')
-time_series = time_series_file.get_data()
-daily_stats(time_series)
