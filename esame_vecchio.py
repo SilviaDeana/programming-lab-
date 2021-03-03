@@ -40,14 +40,16 @@ class CSVTimeSeriesFile():
             # slittiamo la linea del file "timer_series_file"
             # ricordiamo che "elem" e di tipo <list>
             elem = line.split(',')
+            #print("elem:",elem)
             if elem[0] != 'epoch':
                 try:
                     # proviamo a fare l'assegnazione delle variabili 
                     # ricordiamo che il tipo di "elem[0]" ed "elem[1]" e <str>
                     epoch = elem[0]              
                     temp = elem[1]  
+                    #print("elem[0]:",elem[0],"elem[1]:",elem[1])
                 except: 
-                    print("una delle due variabili vuota")
+                    print("una delle due variabili vuota",cont)
                     continue
                
                 if cont == 1:
@@ -55,9 +57,15 @@ class CSVTimeSeriesFile():
                     prec = epoch                  
                     try:
                         # provo a fare la conversione
-                        prec = round(float(prec))    
-                        epoch = round(float(epoch))
-                        temp = round(float(temp), 2)                     
+                        #prec = round(float(prec))   
+                        #epoch = round(float(epoch))
+                        #temp = round(float(temp), 2)                           
+
+                        prec = float(prec)
+                        #prec = round(prec)
+                        temp = float(temp)  
+                        print(type(prec))
+                        print(type(temp))             
                         # i tipi di "prec" e "epoch" sono stati silenzionamente covertiti in <int> mentre il tipo di "temp" in <float> con due cifre di apporosimazione dopo la virgola 
                         
                     except:
@@ -70,9 +78,15 @@ class CSVTimeSeriesFile():
                     epoch = elem[0]                    
                     try:
                         # provo a fare la conversione
-                        prec = round(float(prec))    
-                        epoch = round(float(epoch))
-                        temp = round(float(temp), 2)                      
+                        #prec = round(float(prec))    
+                        #epoch = round(float(epoch))
+                        #temp = round(float(temp), 2) 
+                        prec = float(prec)
+                        print(type(prec))
+                        #prec = round(prec)
+                        temp = float(temp) 
+                        print(type(temp))
+
                         # i tipi di "prec" e "epoch" sono stati silenzionamente covertiti in <int> mentre il tipo di "temp" in <float> con due cifre di apporosimazione dopo la virgola 
  
                     except:
@@ -99,7 +113,8 @@ class CSVTimeSeriesFile():
 
         # chiudo il file 
         time_series_file.close()
-
+        for item in time_series:
+            print(item)
         # il return della funzione "get_data" e la lista annidata "time series"
         return(time_series)
 
@@ -163,13 +178,13 @@ def hourly_trend_changes(time_series):
     cont_ora = cont_ora + 1
     #aggiungo l'ultima rilevazione alla lista     
     lista_trend.append(trend)   
-    print(len(lista_trend))
-
+    for item in lista_trend:
+        print(item)
     return lista_trend
-
 
 ##################### chiamata delle funzioni ########################
 
 time_series_file = CSVTimeSeriesFile(name = 'data.csv')
 time_series = time_series_file.get_data()
+time_series
 hourly_trend_changes(time_series)

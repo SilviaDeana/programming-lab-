@@ -18,18 +18,18 @@ class CSVTimeSeriesFile():
         # controllo sul tipo del nome del file, deve essere una stringa
         #in caso contrario alzo un'eccezione         
         if(isinstance(self.name, str) != True):
-            raise Exception('il nome nel file non e` una stringa')
+            raise ExamException('il nome nel file non e` una stringa')
 
         # apriamo il file e chiamiamo "time_series_file"
         try: 
             time_series_file = open(self.name, 'r')
         except:
             # se il file inserito non si chiama correttamente, verra alzata un'eccezione 
-            raise Exception('file non esiste')
+            raise ExamException('file non esiste')
         
         # controlliamo che il file non sia vuoto, se vuoto viene alzata un'eccezione
         if len(time_series_file.readlines()) == 0:
-            raise Exception('file vuoto')
+            raise ExamException('file vuoto')
 
         # il metodo ".readlines()" una volta completata la lettura del file, lo stesso si trova all'ultima linea, quindi per fare le operazioni richiestie torniamo alla prima linea
         # viene usato il metodo .seek() per non riaprire nuovamente il file 
@@ -40,14 +40,16 @@ class CSVTimeSeriesFile():
             # slittiamo la linea del file "timer_series_file"
             # ricordiamo che "elem" e di tipo <list>
             elem = line.split(',')
+            #print("elem:",elem)
             if elem[0] != 'epoch':
                 try:
                     # proviamo a fare l'assegnazione delle variabili 
                     # ricordiamo che il tipo di "elem[0]" ed "elem[1]" e <str>
                     epoch = elem[0]              
                     temp = elem[1]  
+                    
                 except: 
-                    print("una delle due variabili vuota")
+                    print("una delle due variabili vuota",cont)
                     continue
                
                 if cont == 1:
@@ -55,9 +57,10 @@ class CSVTimeSeriesFile():
                     prec = epoch                  
                     try:
                         # provo a fare la conversione
-                        prec = round(float(prec))    
+                        prec = round(float(prec))   
                         epoch = round(float(epoch))
-                        temp = round(float(temp), 2)                     
+                        temp = round(float(temp), 2)                           
+      
                         # i tipi di "prec" e "epoch" sono stati silenzionamente covertiti in <int> mentre il tipo di "temp" in <float> con due cifre di apporosimazione dopo la virgola 
                         
                     except:
@@ -72,7 +75,8 @@ class CSVTimeSeriesFile():
                         # provo a fare la conversione
                         prec = round(float(prec))    
                         epoch = round(float(epoch))
-                        temp = round(float(temp), 2)                      
+                        temp = round(float(temp), 2) 
+
                         # i tipi di "prec" e "epoch" sono stati silenzionamente covertiti in <int> mentre il tipo di "temp" in <float> con due cifre di apporosimazione dopo la virgola 
  
                     except:
@@ -99,7 +103,6 @@ class CSVTimeSeriesFile():
 
         # chiudo il file 
         time_series_file.close()
-
         # il return della funzione "get_data" e la lista annidata "time series"
         return(time_series)
 
@@ -107,61 +110,86 @@ class CSVTimeSeriesFile():
 # ricordiamo che la lista "time_series" e una lista annidata, composta da due liste da un elemento ciascuna
 def hourly_trend_changes(time_series):
 
-    # dichiaro delle variabili di controllo 
-    cont = 0          # contatore generale, del for 
-    trend = 0         # variabile che andra a contenere i numeri di cambio di trend
-    cont_ora = 0      # contatore delle ore che passano
-    lista_trend = []  # lista annidata che conterra i trend e l'ora 
-
-    # ciclo for che si applica alla lista "time_series"
-    # ricordiamo che "time_series" e una lista annidata, costitita nella prima collona dagli epoch e nella seconda colonna dalle rilevazioni di temperatura
+    decrescente = 0
+    crescente = 0
+    cont = 1
+    trend = -1
+    lista_trend = []
+    lista = []
     for item in time_series:
-        if (cont == 0):
-            # siamo al primo giro 
-            temp_prec = 0        # temperatura precedente
-            temp_succ = item[1]  # temperatura sucessiva         
-            epoch_prec = 0       # epoch precedente
-            epoch_succ = item[0] # epoch sucessivo           
-            delta_secondi = 0    # variabile che contiene l'intervallo in secondi tra l'epoch sucessivo e l'epoch precedente   
-            cambio_ora = 0       # variabile di controllo 
+        cambio_ora = item[0] % 3600
+        lista.append([item[0],item[1], cambio_ora])
+
+    for item in lista:
+        if item[2] == 0:
+            # siamo in un'ora nuova
+            if cont == 1:
+                # primo giro, della prima ora 
+                temp_corrente = item[1]
+                trend = 0 
+                decrescente,"cres:",crescente)
+
+            else: 
+                # siamo in un'ora nuova, ma non la prima, 
+                # valuto se ce un cambiamento di trend rispetto all'ora precedente 
+                # significa che la prima ora aveva solo una misurazione 
+            
+                lista_trend.append(trend) # append delle misurazioni precedenti
+                trend = 0
+                temp_prec = temp_corrente
+                temp_corrente = item[1]   
+
+                # rimane decrescente
+                if temp_prec - temp_corrente > 0 and decrescente == 0 and crescente == 0:
+                    decrescente = 1 
+                    crescente = 0      
+
+                # rimane crescente   
+                elif temp_prec - temp_corrente < 0 and crescente == 0 and decrescente == 0:
+                    crescente = 1
+                    decrescente = 0
+
+                # caso da crescente a decrescente
+                elif temp_prec - temp_corrente > 0 and crescente == 1 and decrescente == 0:
+                    trend = trend + 1 
+                    decrescente = 1 
+                    crescente = 0      
+
+                # caso da decrescente a crescente     
+                elif temp_prec - temp_corrente < 0 and decrescente == 1 and crescente == 0:
+                    trend = trend + 1  
+                    crescente = 1
+                    decrescente = 0
 
         else:
-            # siamo almeno al secondo giro 
-            # assegnamo le variabili in modo da poter analizzare i valori corretti             
-            temp_prec = temp_succ
-            temp_succ = item[1]         
-            epoch_prec = epoch_succ
-            epoch_succ = item[0]       
-            # calcoliamo il delta secondi             
-            delta_secondi = epoch_succ - epoch_prec
-            # calcoliamo il valore di "cambio_d'ora" e lo volutiamo 
-            # la variabile "cambio_d'ora" serve per capire quando si passa all'ora successiva
-            cambio_ora = cambio_ora + delta_secondi
-            if (cambio_ora >= 3600): 
-                # siamo in un'ora nuova, siccome "cambio d'ora" e una quantita di secondi maggiore ai secondi presenti in un'ora (3600)
-                cambio_ora = 0
-                cont_ora = cont_ora + 1
-                lista_trend.append(trend) 
-                # aggiungiamo gli elementi alla lista    
-                trend = 0       
-                if (epoch_succ == time_series[-1][0]):
-                    # caso in cui l'ultima rilevazione registrata, appartiene ad un'ora nuova
-                    if(temp_succ < temp_prec): 
-                    # siamo nel caso di un cambio di trend
-                        trend = trend + 1   
-            
-            else: 
-                # siamo nella stessa ora
-                # valutiamo le temperature
-                if(temp_succ < temp_prec): 
-                    # siamo nel caso di un cambio di trend
-                    trend = trend + 1   
+            # siamo nella stessa ora 
+            temp_prec = temp_corrente
+            temp_corrente = item[1]
+
+            # rimane decrescente
+            if temp_prec - temp_corrente > 0 and decrescente == 0 and crescente == 0:
+                decrescente = 1 
+                crescente = 0      
+
+            # rimane crescente   
+            elif temp_prec - temp_corrente < 0 and crescente == 0 and decrescente == 0:
+                crescente = 1
+                decrescente = 0
+
+            # caso da crescente a decrescente
+            elif temp_prec - temp_corrente > 0 and crescente == 1 and decrescente == 0:
+                trend = trend + 1 
+                decrescente = 1 
+                crescente = 0      
+
+            # caso da decrescente a crescente     
+            elif temp_prec - temp_corrente < 0 and decrescente == 1 and crescente == 0:
+                trend = trend + 1  
+                crescente = 1
+                decrescente = 0
 
         cont = cont + 1
-
-    # scrivo l'ultimo trend 
-    cont_ora = cont_ora + 1
-    #aggiungo l'ultima rilevazione alla lista     
-    lista_trend.append(trend)   
+    lista_trend.append(trend)
+    print(lista_trend)
 
     return lista_trend
